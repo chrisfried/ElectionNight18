@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import * as staticData from '../../assets/mock/az/all_county_races_4_0_en_6689.json';
 import * as staticData2 from '../../assets/mock/az/all_county_races_4_0_en_6730.json';
 import * as countyData1 from '../../assets/mock/az/all_county_races_4_11_en_6754.json';
+import * as stateData3 from '../../assets/mock/az/all_races_4_0_en_6730.json';
+import * as countyData3 from '../../assets/mock/az/all_races_4_11_en_6754.json';
 import { of, interval, BehaviorSubject, combineLatest, merge } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
 
@@ -32,6 +34,9 @@ export class AzService {
   );
 
   stateData = merge(this.dataInitial, this.data);
+
+  stateDataAll = of(stateData3);
+  countyDataAll = of(countyData3);
 
   unfilteredResults = combineLatest(this.stateData, this.countyData).pipe(
     map(([state, county]: [any, any]) => {
@@ -95,9 +100,6 @@ export class AzService {
           contests[ContestId].ChoiceArray = [
             contests[ContestId].Choices[ChoiceName]
           ];
-
-          this.nameFix(contests[ContestId].Choices[ChoiceName]);
-          this.partyFix(contests[ContestId].Choices[ChoiceName]);
         } else {
           if (!contests[ContestId].byCounty[CountyId]) {
             contests[ContestId].byCounty[CountyId] = {
@@ -119,9 +121,6 @@ export class AzService {
               ...contests[ContestId].ChoiceArray,
               contests[ContestId].Choices[ChoiceName]
             ];
-
-            this.nameFix(contests[ContestId].Choices[ChoiceName]);
-            this.partyFix(contests[ContestId].Choices[ChoiceName]);
           } else {
             contests[ContestId].Choices[
               ChoiceName
@@ -156,11 +155,52 @@ export class AzService {
     })
   );
 
-  results = combineLatest(
+  earlyBallots = combineLatest(this.stateDataAll, this.countyDataAll).pipe(
+    map(([state, county]: [any, any]) => {
+      return [...state.default, ...county.default];
+    })
+  );
+
+  unfilteredEarlyBallots = combineLatest(
     this.unfilteredResults,
-    this.hidden,
-    this.showHidden
+    this.earlyBallots
   ).pipe(
+    map(([contestArray, earlyBallots]) => {
+      contestArray.forEach(contest => {
+        const earlyContest = earlyBallots.find(
+          item => item.ContestId === contest.ContestId
+        );
+        contest.ChoiceArray.forEach(choice => {
+          const earlyChoice = earlyContest.Choices.find(
+            item2 => item2.ChoiceName === choice.ChoiceName
+          );
+          if (earlyChoice) {
+            choice.EarlyVotes = earlyChoice.EarlyVotes;
+            choice.ProvisionalVotes = earlyChoice.ProvisionalVotes;
+            choice.PhotoFile = earlyChoice.PhotoFile;
+          }
+        });
+      });
+
+      return contestArray;
+    })
+  );
+
+  namePartyFix = this.unfilteredEarlyBallots.pipe(
+    map(contestArray => {
+      contestArray.forEach(contest => {
+          contest.ChoiceArray.forEach(choice => {
+            const { ChoiceName } = choice;
+
+            this.nameFix(contest.Choices[ChoiceName]);
+            this.partyFix(contest.Choices[ChoiceName]);
+          });
+      });
+      return contestArray;
+    })
+  );
+
+  results = combineLatest(this.namePartyFix, this.hidden, this.showHidden).pipe(
     map(([contestArray, hidden, showHidden]) => {
       let prunedArray = [];
       contestArray.forEach(contest => {

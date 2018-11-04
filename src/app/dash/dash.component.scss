@@ -1,6 +1,10 @@
 .grid-container {
-  margin: 20px;
+  padding: 1em;
   column-count: 1;
+  height: calc(100% - 96px);
+  position: absolute;
+  width: calc(100% - 2em);
+  overflow-x: auto;
 
   @media (min-width: 575px) {
     column-count: 2;

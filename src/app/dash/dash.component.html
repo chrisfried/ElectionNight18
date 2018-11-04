@@ -1,5 +1,5 @@
-<div *ngIf="(showHidden | async)" class="grid-container">
-  <mat-card>
+<div class="grid-container">
+  <mat-card *ngIf="(showHidden | async)">
     <mat-card-header>
       <mat-card-title>County Overlay</mat-card-title>
     </mat-card-header>
@@ -9,7 +9,7 @@
         county.CountyName }}</button>
     </mat-card-content>
   </mat-card>
-  <mat-card>
+  <mat-card *ngIf="(showHidden | async)">
     <mat-card-header>
       <mat-card-title>County Contests</mat-card-title>
     </mat-card-header>
@@ -18,7 +18,7 @@
         county.CountyName }}</button>
     </mat-card-content>
   </mat-card>
-  <mat-card>
+  <mat-card *ngIf="(showHidden | async)">
     <mat-card-header>
       <mat-card-title>Quick Filters</mat-card-title>
     </mat-card-header>
@@ -28,8 +28,7 @@
       <button (click)="hideUncontested()" mat-stroked-button>Hide Uncontested</button>
     </mat-card-content>
   </mat-card>
-</div>
-<div class="grid-container">
+
   <mat-card *ngFor="let contest of contests | async">
     <mat-card-actions *ngIf="(showHidden | async)" align="start" class="card-show-hide">
       <button [color]="contest.hidden ? 'primary' : 'accent'" (click)="toggleContest(contest.ContestId)"
