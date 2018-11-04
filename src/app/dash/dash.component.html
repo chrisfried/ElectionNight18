@@ -1,0 +1,63 @@
+<div *ngIf="(showHidden | async)" class="grid-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>County Overlay</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-flat-button [color]="countyOverlay === county.CountyId ? 'primary' : ''" (click)="countyOverlay === county.CountyId ? countyOverlay = 0 : countyOverlay = county.CountyId"
+        *ngFor="let county of counties | async">{{
+        county.CountyName }}</button>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>County Contests</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-flat-button [color]="countyOverlay === county.CountyId ? 'primary' : ''" *ngFor="let county of counties | async">{{
+        county.CountyName }}</button>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Quick Filters</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <button (click)="showAll()" mat-stroked-button>Show All</button>
+      <button (click)="hideAll()" mat-stroked-button>Hide All</button>
+      <button (click)="hideUncontested()" mat-stroked-button>Hide Uncontested</button>
+    </mat-card-content>
+  </mat-card>
+</div>
+<div class="grid-container">
+  <mat-card *ngFor="let contest of contests | async">
+    <mat-card-actions *ngIf="(showHidden | async)" align="start" class="card-show-hide">
+      <button [color]="contest.hidden ? 'primary' : 'accent'" (click)="toggleContest(contest.ContestId)"
+        mat-icon-button>
+        <mat-icon>{{
+          contest.hidden ?
+          'add' : 'remove'}}</mat-icon>
+      </button>
+    </mat-card-actions>
+    <mat-card-header>
+      <mat-card-title>{{contest.ContestName}}</mat-card-title>
+      <mat-card-subtitle class="clickable" (click)="precinctPercentage = !precinctPercentage">{{ precinctPercentage ?
+        (contest.PrecinctsReported / contest.PrecinctsParticipating * 100 | number:'1.0-1') + '% of'
+        : contest.PrecinctsReported + ' of ' + contest.PrecinctsParticipating }} Precincts
+        Reporting{{ contest.NumberToElect > 1 ? ', Elect ' + contest.NumberToElect : '' }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content *ngIf="!contest.hidden" class="dashboard-card-content">
+      <mat-list>
+        <mat-list-item class="clickable" (click)="votePercentage = !votePercentage" *ngFor="let choice of contest.ChoiceArray; let i = index"
+          [matBadge]="choice.PartyElectionId" matBadgePosition="before" [ngClass]="choice.PartyElectionId">{{
+          choice.ChoiceName }}<span class="vote-count">{{votePercentage && contest.ContestTotalVotes > 0 ?
+            (choice.ChoiceTotalVotes /
+            contest.ContestTotalVotes * 100 | number:'1.1-1') + '%' : choice.ChoiceTotalVotes}}</span>
+          <div class="fill-bar" [ngStyle]="{'width': choice.ChoiceTotalVotes / contest.ContestTotalVotes * 100 + '%'}"></div>
+          <div class="fill-bar" *ngIf="contest.byCounty && contest.byCounty[countyOverlay] && contest.byCounty[countyOverlay][choice.OriginalChoiceName]"
+            [ngStyle]="{'width': contest.byCounty[countyOverlay][choice.OriginalChoiceName].ChoiceTotalVotes / contest.ContestTotalVotes * 100 + '%'}"></div>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+</div>
