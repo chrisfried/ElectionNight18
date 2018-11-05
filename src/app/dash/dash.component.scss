@@ -35,6 +35,8 @@
 }
 
 .mat-badge-content {
+  background: #595f72;
+
   .R & {
     background: #b24c63;
   }
@@ -45,10 +47,6 @@
 
   .G & {
     background: #00b295;
-  }
-
-  .I & {
-    background: #595f72;
   }
 }
 

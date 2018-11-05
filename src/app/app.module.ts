@@ -15,11 +15,12 @@ import {
   MatGridListModule,
   MatCardModule,
   MatMenuModule,
-  MatBadgeModule
+  MatBadgeModule,
+  MatExpansionModule
 } from '@angular/material';
 import { DashComponent } from './dash/dash.component';
 
-import { AzService } from './result-services/az.service';
+import { MnService } from './result-services/mn.service';
 import { BrowserStateService } from './browser-state.service';
 import { HttpClientModule } from '@angular/common/http';
 @NgModule({
@@ -37,9 +38,10 @@ import { HttpClientModule } from '@angular/common/http';
     MatCardModule,
     MatMenuModule,
     MatBadgeModule,
+    MatExpansionModule,
     HttpClientModule
   ],
-  providers: [AzService, BrowserStateService],
+  providers: [MnService, BrowserStateService],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

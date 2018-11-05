@@ -9,55 +9,33 @@
   </mat-card>
   <mat-card>
     <mat-card-header>
-      <mat-card-title>County Overlay</mat-card-title>
+      <mat-card-title>Contests</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <button mat-flat-button [color]="countyOverlay === county.CountyId ? 'primary' : ''" (click)="countyOverlay === county.CountyId ? countyOverlay = 0 : countyOverlay = county.CountyId"
-        *ngFor="let county of counties">{{
-        county.CountyName }}</button>
-    </mat-card-content>
-  </mat-card>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>County Contests</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <button mat-flat-button [color]="(activeCounty | async) === 0 ? 'primary' : ''" (click)="selectCounty(0)">None</button>
-      <button mat-flat-button [color]="(activeCounty | async) === county.CountyId ? 'primary' : ''" (click)="selectCounty(county.CountyId)"
-        *ngFor="let county of counties">{{
-        county.CountyName }}</button>
-    </mat-card-content>
-  </mat-card>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Quick Filters</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <button (click)="showAll()" mat-stroked-button>Show All</button>
-      <button (click)="hideAll()" mat-stroked-button>Hide All</button>
-      <button (click)="hideUncontested()" mat-stroked-button>Hide Uncontested</button>
-    </mat-card-content>
-  </mat-card>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>State Contests</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-        *ngFor="let contest of fullStateList | async">
-        {{contest.ContestName}}
-      </button>
-    </mat-card-content>
-  </mat-card>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>County Contests</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-        *ngFor="let contest of fullCountyList | async">
-        {{contest.ContestName}}
-      </button>
+      <mat-expansion-panel *ngFor="let groupName of contestGroups">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{ groupName }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+          *ngFor="let contest of contestsObj[groupName].groupArray">
+          {{contest.OfficeName}}
+        </button>
+      </mat-expansion-panel>
+      <mat-expansion-panel *ngFor="let county of counties">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{ county.CountyName }} County
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+          *ngFor="let contest of contestsObj['County Contests'][county.CountyID].groupArray">
+          {{contest.OfficeName}}
+        </button>
+      </mat-expansion-panel>
     </mat-card-content>
   </mat-card>
 </div>
@@ -66,24 +44,26 @@
   <ng-container *ngFor="let contest of contests | async">
     <mat-card *ngIf="!contest.hidden">
       <mat-card-header>
-        <img *ngIf="contest.ChoicesArray[0].PhotoFile && (!contest.ChoicesArray[1] || contest.ChoicesArray[0].ChoiceTotalVotes() > contest.ChoicesArray[1].ChoiceTotalVotes())"
-          mat-card-avatar [src]="'https://cdn1.arizona.vote/photos/4/0/' + contest.ChoicesArray[0].PhotoFile">
-        <mat-card-title>{{contest.ContestName}}</mat-card-title>
+        <mat-card-title>{{contest.OfficeName}}</mat-card-title>
         <mat-card-subtitle class="clickable" (click)="precinctPercentage = !precinctPercentage">{{ precinctPercentage ?
-          (contest.PrecinctsReported() / contest.PrecinctsParticipating() * 100 | number:'1.0-1') + '% of'
-          : contest.PrecinctsReported() + ' of ' + contest.PrecinctsParticipating() }} Precincts
-          Reporting{{ contest.NumberToElect > 1 ? ', Elect ' + contest.NumberToElect : '' }}</mat-card-subtitle>
+          (contest.NumberOfPrecinctsReporting / contest.TotalNumberOfPrecinctsVotingForTheOffice * 100 |
+          number:'1.0-1') + '% of'
+          : contest.NumberOfPrecinctsReporting + ' of ' + contest.TotalNumberOfPrecinctsVotingForTheOffice }} Precincts
+          Reporting</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="dashboard-card-content">
         <mat-list>
-          <mat-list-item class="clickable" (click)="votePercentage = !votePercentage" *ngFor="let choice of contest.ChoicesArray"
-            [matBadge]="choice.PartyElectionId" matBadgePosition="before" [ngClass]="[choice.PartyElectionId, choice.ChoiceName]">{{
-            choice.ChoiceName }}<span class="vote-count">{{votePercentage && contest.ContestTotalVotes() > 0 ?
-              (choice.ChoiceTotalVotes() /
-              contest.ContestTotalVotes() * 100 | number:'1.1-1') + '%' : choice.ChoiceTotalVotes()}}</span>
-            <div class="fill-bar" [ngStyle]="{'width': contest.ContestTotalVotes() ? choice.ChoiceTotalVotes() / contest.ContestTotalVotes() * 100 + '%' : '0%'}"></div>
-            <div class="fill-bar" *ngIf="countyOverlay && choice.byCounty[countyOverlay]" [ngStyle]="{'width': contest.ContestTotalVotes() ? choice.byCounty[countyOverlay].ChoiceTotalVotes / contest.ContestTotalVotes() * 100 + '%' : '0%'}"></div>
-          </mat-list-item>
+          <ng-container *ngFor="let choice of contest.ChoicesArray; last as isLast">
+            <mat-list-item *ngIf="!isLast || choice.PartyAbbreviation !== 'WI'" class="clickable" (click)="votePercentage = !votePercentage"
+              [matBadge]="choice.PartyAbbreviation !== 'WI' && choice.PartyAbbreviation !== 'NP' ? choice.PartyAbbreviation[0] : ''"
+              matBadgePosition="before" [ngClass]="[choice.PartyAbbreviation[0], choice.CandidateName]">{{
+              choice.CandidateName }}<span class="vote-count">{{votePercentage &&
+                contest.TotalNumberOfVotesForOfficeInArea > 0 ?
+                (choice.VotesForCandidate /
+                contest.TotalNumberOfVotesForOfficeInArea * 100 | number:'1.1-1') + '%' : choice.VotesForCandidate}}</span>
+              <div class="fill-bar" [ngStyle]="{'width': contest.TotalNumberOfVotesForOfficeInArea ? choice.VotesForCandidate / contest.TotalNumberOfVotesForOfficeInArea * 100 + '%' : '0%'}"></div>
+            </mat-list-item>
+          </ng-container>
         </mat-list>
       </mat-card-content>
     </mat-card>

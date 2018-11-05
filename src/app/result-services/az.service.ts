@@ -120,14 +120,13 @@ export class AzService {
   );
 
   displaySettings: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  autoscroll = false;
 
   counties = {};
   countiesArray = [];
 
   contests = {};
 
-  scrollInterval = interval(20000).pipe(map(res => this.autoscroll));
+  scrollInterval = interval(20000);
 
   fullStateList = this.stateCountyData.pipe(
     map(data => this.choiceProcessor(data, 0)),

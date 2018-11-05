@@ -2,7 +2,7 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
-import { AzService } from '../result-services/az.service';
+import { MnService } from '../result-services/mn.service';
 import { BrowserStateService } from '../browser-state.service';
 
 @Component({
@@ -23,20 +23,23 @@ export class DashComponent {
   votePercentage: boolean;
   autoscroll: boolean;
   activeCounty: BehaviorSubject<number>;
+  contestGroups: string[];
+  contestsObj: {};
 
   constructor(
-    private azService: AzService,
+    private mnService: MnService,
     browserStateService: BrowserStateService
   ) {
-    this.contests = azService.results;
-    this.counties = azService.countiesArray;
-    this.fullStateList = azService.fullStateList;
-    this.fullCountyList = azService.fullCountyList;
-    this.displaySettings = azService.displaySettings;
-    this.autoscroll = azService.autoscroll;
-    this.activeCounty = azService.activeCounty;
-
-    azService.scrollInterval.subscribe(res => {
+    this.contests = mnService.results;
+    this.contestGroups = mnService.contestGroups;
+    this.contestsObj = mnService.contests;
+    this.counties = mnService.counties;
+    // this.fullStateList = mnService.fullStateList;
+    // this.fullCountyList = mnService.fullCountyList;
+    this.displaySettings = mnService.displaySettings;
+    // this.autoscroll = mnService.autoscroll;
+    // this.activeCounty = mnService.activeCounty;
+    mnService.scrollInterval.subscribe(res => {
       if (this.autoscroll) {
         try {
           const viewport = this.contestContainer.nativeElement.clientWidth + 16;
@@ -52,8 +55,8 @@ export class DashComponent {
     });
   }
 
-  showAll = () => this.azService.showAll();
-  hideAll = () => this.azService.hideAll();
-  hideUncontested = () => this.azService.hideUncontested();
-  selectCounty = county => this.azService.selectCounty(county);
+  // showAll = () => this.mnService.showAll();
+  // hideAll = () => this.mnService.hideAll();
+  // hideUncontested = () => this.mnService.hideUncontested();
+  // selectCounty = county => this.mnService.selectCounty(county);
 }

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AzService } from '../result-services/az.service';
+import { MnService } from '../result-services/mn.service';
 
 @Component({
   selector: 'app-nav',
@@ -16,10 +16,10 @@ export class NavComponent {
 
   constructor(
     private breakpointObserver: BreakpointObserver,
-    private azService: AzService
+    private mnService: MnService
   ) {}
 
   toggleSettings() {
-    this.azService.toggleSettings();
+    this.mnService.toggleSettings();
   }
 }
