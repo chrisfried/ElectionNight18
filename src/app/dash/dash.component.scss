@@ -1,13 +1,25 @@
 .grid-container {
-  padding: 1em;
+  padding: 16px;
   column-count: 1;
-  height: calc(100% - 96px);
-  position: absolute;
-  width: calc(100% - 2em);
-  overflow-x: auto;
+  scroll-behavior: smooth;
 
   @media (min-width: 575px) {
     column-count: 2;
+    width: calc(100% - 2em);
+    height: calc(100% - 96px);
+    position: absolute;
+    overflow-x: auto;
+    margin: 0 16px;
+    padding: 16px 0;
+
+    &.settings {
+      position: relative;
+      overflow: auto;
+      height: auto;
+      width: auto;
+      margin: 0;
+      padding: 16px;
+    }
   }
   @media (min-width: 960px) {
     column-count: 3;
@@ -59,7 +71,8 @@
   background-color: rgba(89, 95, 114, 0.15);
   transition: width 1s;
 
-  .R & {
+  .R &,
+  .No & {
     background-color: rgba(178, 76, 99, 0.15);
   }
 
@@ -67,11 +80,22 @@
     background-color: rgba(63, 81, 181, 0.15);
   }
 
-  .G & {
+  .G &,
+  .Yes & {
     background-color: rgba(0, 178, 149, 0.15);
   }
 }
 
 .clickable {
   cursor: pointer;
+}
+
+.mat-card-title,
+.mat-button-wrapper {
+  text-transform: capitalize;
+}
+
+button {
+  text-transform: capitalize;
+  margin: 0 0.5em 0.5em 0;
 }

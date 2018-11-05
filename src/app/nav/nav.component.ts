@@ -19,7 +19,7 @@ export class NavComponent {
     private azService: AzService
   ) {}
 
-  toggleHidden() {
-    this.azService.toggleShowHidden();
+  toggleSettings() {
+    this.azService.toggleSettings();
   }
 }
