@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { of, forkJoin, interval, BehaviorSubject } from 'rxjs';
+import { of, forkJoin, interval, BehaviorSubject, merge } from 'rxjs';
 import { map, switchMap, catchError, take } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
@@ -94,7 +94,7 @@ export class MnService {
       return of([]);
     })
   );
-  results = this.checkHttp.pipe(
+  results = merge(this.checkHttp, this.checkInterval).pipe(
     map(resultsArray => {
       resultsArray.forEach(res => {
         const resArray = res.split('\n');
