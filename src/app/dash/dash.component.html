@@ -55,6 +55,8 @@
   <ng-container *ngFor="let contest of contests | async">
     <mat-card *ngIf="!contest.hidden">
       <mat-card-header>
+        <img *ngIf="contest.ChoicesArray[0].PhotoFile && (!contest.ChoicesArray[1] || contest.ChoicesArray[0].ChoiceTotalVotes() > contest.ChoicesArray[1].ChoiceTotalVotes())"
+          mat-card-avatar [src]="'https://cdn1.arizona.vote/photos/4/0/' + contest.ChoicesArray[0].PhotoFile">
         <mat-card-title>{{contest.ContestName}}</mat-card-title>
         <mat-card-subtitle class="clickable" (click)="precinctPercentage = !precinctPercentage">{{ precinctPercentage ?
           (contest.PrecinctsReported() / contest.PrecinctsParticipating() * 100 | number:'1.0-1') + '% of'

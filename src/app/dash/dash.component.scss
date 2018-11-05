@@ -5,6 +5,9 @@
 
   @media (min-width: 575px) {
     column-count: 2;
+  }
+  @media (min-width: 960px) {
+    column-count: 3;
     width: calc(100% - 2em);
     height: calc(100% - 96px);
     position: absolute;
@@ -20,9 +23,6 @@
       margin: 0;
       padding: 16px;
     }
-  }
-  @media (min-width: 960px) {
-    column-count: 3;
   }
   @media (min-width: 1300px) {
     column-count: 4;
