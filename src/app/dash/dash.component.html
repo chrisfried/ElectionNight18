@@ -1,10 +1,10 @@
-<div *ngIf="(displaySettings | async)" class="grid-container settings">
+<div *ngIf="(displaySettings | async)" class="grid-container">
   <mat-card>
     <mat-card-header>
-      <mat-card-title>Autoscroll</mat-card-title>
+      <mat-card-title>Slideshow</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <button mat-flat-button [color]="autoscroll ? 'primary' : ''" (click)="autoscroll = !autoscroll">Autoscroll</button>
+      <button mat-flat-button [color]="autoscroll ? 'primary' : ''" (click)="autoscroll = !autoscroll">Slideshow</button>
     </mat-card-content>
   </mat-card>
   <mat-card>
@@ -13,6 +13,17 @@
     </mat-card-header>
     <mat-card-content>
       <button mat-flat-button [color]="countyOverlay === county.CountyId ? 'primary' : ''" (click)="countyOverlay === county.CountyId ? countyOverlay = 0 : countyOverlay = county.CountyId"
+        *ngFor="let county of counties">{{
+        county.CountyName }}</button>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>County Contests</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <button mat-flat-button [color]="(activeCounty | async) === 0 ? 'primary' : ''" (click)="selectCounty(0)">None</button>
+      <button mat-flat-button [color]="(activeCounty | async) === county.CountyId ? 'primary' : ''" (click)="selectCounty(county.CountyId)"
         *ngFor="let county of counties">{{
         county.CountyName }}</button>
     </mat-card-content>
@@ -51,7 +62,7 @@
   </mat-card>
 </div>
 
-<div *ngIf="!(displaySettings | async)" class="grid-container" #contestContainer>
+<div *ngIf="!(displaySettings | async)" class="grid-container" [ngClass]="{'slideshow': autoscroll}" #contestContainer>
   <ng-container *ngFor="let contest of contests | async">
     <mat-card *ngIf="!contest.hidden">
       <mat-card-header>

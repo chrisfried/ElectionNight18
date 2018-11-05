@@ -22,6 +22,7 @@ export class DashComponent {
   displaySettings: BehaviorSubject<boolean>;
   votePercentage: boolean;
   autoscroll: boolean;
+  activeCounty: BehaviorSubject<number>;
 
   constructor(
     private azService: AzService,
@@ -33,6 +34,7 @@ export class DashComponent {
     this.fullCountyList = azService.fullCountyList;
     this.displaySettings = azService.displaySettings;
     this.autoscroll = azService.autoscroll;
+    this.activeCounty = azService.activeCounty;
 
     azService.scrollInterval.subscribe(res => {
       if (this.autoscroll) {
@@ -53,4 +55,5 @@ export class DashComponent {
   showAll = () => this.azService.showAll();
   hideAll = () => this.azService.hideAll();
   hideUncontested = () => this.azService.hideUncontested();
+  selectCounty = county => this.azService.selectCounty(county);
 }

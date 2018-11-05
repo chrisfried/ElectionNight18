@@ -8,20 +8,14 @@
   }
   @media (min-width: 960px) {
     column-count: 3;
-    width: calc(100% - 2em);
-    height: calc(100% - 96px);
-    position: absolute;
-    overflow-x: auto;
-    margin: 0 16px;
-    padding: 16px 0;
 
-    &.settings {
-      position: relative;
-      overflow: auto;
-      height: auto;
-      width: auto;
-      margin: 0;
-      padding: 16px;
+    &.slideshow {
+      width: calc(100% - 2em);
+      height: calc(100% - 96px);
+      position: absolute;
+      overflow-x: auto;
+      margin: 0 16px;
+      padding: 16px 0;
     }
   }
   @media (min-width: 1300px) {

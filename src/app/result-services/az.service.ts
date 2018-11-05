@@ -1,17 +1,124 @@
 import { Injectable } from '@angular/core';
-import * as staticData from '../../assets/mock/az/all_county_races_4_0_en_6689.json';
-import * as staticData2 from '../../assets/mock/az/all_county_races_4_0_en_6730.json';
-import * as countyData1 from '../../assets/mock/az/all_county_races_4_11_en_6754.json';
-import * as stateData3 from '../../assets/mock/az/all_races_4_0_en_6730.json';
-import * as countyData3 from '../../assets/mock/az/all_races_4_11_en_6754.json';
 import { of, interval, BehaviorSubject, combineLatest, merge } from 'rxjs';
-import { map, switchMap, take, tap } from 'rxjs/operators';
+import {
+  map,
+  switchMap,
+  take,
+  tap,
+  withLatestFrom,
+  catchError
+} from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AzService {
-  dataset = false;
+  stateUploadId = new BehaviorSubject(0);
+  stateCheckHttp = this.http.get('/data/4/0/election_4_0.json');
+  stateInterval = interval(10000).pipe(
+    switchMap(res => this.stateCheckHttp),
+    catchError(e => {
+      console.error(e);
+      return of({});
+    })
+  );
+  stateVersionCheck = merge(this.stateCheckHttp, this.stateInterval)
+    .pipe(
+      withLatestFrom(this.stateUploadId),
+      tap(([res, uploadId]: [{ uploadId: number }, number]) => {
+        if (res.uploadId && res.uploadId !== uploadId) {
+          this.stateUploadId.next(res.uploadId);
+        }
+      })
+    )
+    .subscribe();
+  stateCountyData = this.stateUploadId.pipe(
+    switchMap(uploadId => {
+      if (uploadId > 0) {
+        return this.http.get(
+          `/data/4/0/all_county_races_4_0_en_${uploadId}.json`
+        );
+      } else {
+        return of([]);
+      }
+    }),
+    catchError(e => {
+      console.error(e);
+      return of([]);
+    })
+  );
+  stateAllData = this.stateUploadId.pipe(
+    switchMap(uploadId => {
+      if (uploadId > 0) {
+        return this.http.get(`/data/4/0/all_races_4_0_en_${uploadId}.json`);
+      } else {
+        return of([]);
+      }
+    }),
+    catchError(e => {
+      console.error(e);
+      return of([]);
+    })
+  );
+
+  activeCounty = new BehaviorSubject(0);
+  countyUploadId = new BehaviorSubject(0);
+  countyCheckHttp = this.activeCounty.pipe(
+    switchMap(county => {
+      if (county > 0) {
+        return this.http.get(`/data/4/${county}/election_4_${county}.json`);
+      } else {
+        return of({});
+      }
+    }),
+    catchError(e => {
+      console.error(e);
+      return of({});
+    })
+  );
+  countyInterval = interval(10000).pipe(switchMap(res => this.countyCheckHttp));
+  countyVersionCheck = merge(this.countyCheckHttp, this.countyInterval)
+    .pipe(
+      withLatestFrom(this.countyUploadId),
+      tap(([res, uploadId]: [{ uploadId: number }, number]) => {
+        if (res.uploadId && res.uploadId !== uploadId) {
+          this.countyUploadId.next(res.uploadId);
+        }
+      })
+    )
+    .subscribe();
+  countyCountyData = combineLatest(this.activeCounty, this.countyUploadId).pipe(
+    switchMap(([county, uploadId]) => {
+      if (county > 0 && uploadId > 0) {
+        return this.http.get(
+          `/data/4/${county}/all_county_races_4_${county}_en_${uploadId}.json`
+        );
+      } else {
+        return of([]);
+      }
+    }),
+    catchError(e => {
+      console.error(e);
+      return of([]);
+    })
+  );
+  countyAllData = combineLatest(this.activeCounty, this.countyUploadId).pipe(
+    switchMap(([county, uploadId]) => {
+      if (county > 0 && uploadId > 0) {
+        return this.http.get(
+          `/data/4/${county}/all_races_4_${county}_en_${uploadId}.json`
+        );
+      } else {
+        return of([]);
+      }
+    }),
+    catchError(e => {
+      console.error(e);
+      return of([]);
+    })
+  );
+
   displaySettings: BehaviorSubject<boolean> = new BehaviorSubject(false);
   autoscroll = false;
 
@@ -20,32 +127,13 @@ export class AzService {
 
   contests = {};
 
-  dataInitial = of(staticData2);
-  data = interval(30000).pipe(
-    switchMap(res => {
-      this.dataset = !this.dataset;
-      if (this.dataset) {
-        return of(staticData);
-      } else {
-        return of(staticData2);
-      }
-    })
-  );
-
   scrollInterval = interval(20000).pipe(map(res => this.autoscroll));
 
-  stateData = merge(this.dataInitial, this.data);
-
-  // stateData = of(staticData2);
-  countyData = of(countyData1);
-  stateDataAll = of(stateData3);
-  countyDataAll = of(countyData3);
-
-  fullStateList = this.stateData.pipe(
+  fullStateList = this.stateCountyData.pipe(
     map(data => this.choiceProcessor(data, 0)),
     tap(data => data.forEach(contest => this.contestNameFix(contest)))
   );
-  fullCountyList = this.countyData.pipe(
+  fullCountyList = this.countyCountyData.pipe(
     map(data => this.choiceProcessor(data, 11)),
     tap(data => data.forEach(contest => this.contestNameFix(contest)))
   );
@@ -69,9 +157,9 @@ export class AzService {
     })
   );
 
-  earlyBallots = combineLatest(this.stateDataAll, this.countyDataAll).pipe(
+  earlyBallots = combineLatest(this.stateAllData, this.countyAllData).pipe(
     map(([state, county]: [any, any]) => {
-      return [...state.default, ...county.default];
+      return [...state, ...county];
     })
   );
 
@@ -97,13 +185,9 @@ export class AzService {
     })
   );
 
-  constructor() {}
+  constructor(private http: HttpClient) {}
 
   choiceProcessor(data, ResultSetId) {
-    if (data.default) {
-      data = data.default;
-    }
-
     const contestsArray = [];
 
     data.forEach(item => {
@@ -306,5 +390,10 @@ export class AzService {
         }
       });
     });
+  }
+
+  selectCounty(county) {
+    this.countyUploadId.next(0);
+    this.activeCounty.next(county);
   }
 }

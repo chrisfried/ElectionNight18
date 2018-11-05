@@ -21,7 +21,7 @@ import { DashComponent } from './dash/dash.component';
 
 import { AzService } from './result-services/az.service';
 import { BrowserStateService } from './browser-state.service';
-
+import { HttpClientModule } from '@angular/common/http';
 @NgModule({
   declarations: [AppComponent, NavComponent, DashComponent],
   imports: [
@@ -36,7 +36,8 @@ import { BrowserStateService } from './browser-state.service';
     MatGridListModule,
     MatCardModule,
     MatMenuModule,
-    MatBadgeModule
+    MatBadgeModule,
+    HttpClientModule
   ],
   providers: [AzService, BrowserStateService],
   bootstrap: [AppComponent]
