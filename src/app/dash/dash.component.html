@@ -1,11 +1,11 @@
-<div *ngIf="(displaySettings | async)" class="grid-container">
+<div class="grid-container settings" [ngClass]="{'visible': (displaySettings | async)}">
   <mat-card>
     <mat-card-header>
       <mat-card-title>Slideshow</mat-card-title>
       <mat-card-subtitle>Scrolls horizontally to next "slide" every 20 seconds</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <button mat-flat-button [color]="autoscroll ? 'primary' : ''" (click)="autoscroll = !autoscroll">Slideshow</button>
+      <button mat-flat-button [color]="(slideshow | async) ? 'primary' : ''" (click)="toggleSlideshow()">Slideshow</button>
     </mat-card-content>
   </mat-card>
   <mat-card>
@@ -14,7 +14,7 @@
       <mat-card-subtitle>Choose which contests to display</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <mat-accordion>
+      <mat-accordion *ngIf="contestsObj | async as contestObject">
         <mat-expansion-panel *ngFor="let groupName of contestGroups">
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -22,8 +22,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
-            <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-              *ngFor="let contest of contestsObj[groupName].groupArray">
+            <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'" *ngFor="let contest of contestObject[groupName]?.groupArray">
               {{contest.OfficeName}}
             </button>
           </ng-template>
@@ -34,14 +33,14 @@
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <mat-accordion>
-              <mat-expansion-panel *ngFor="let city of contestsObj['City Contests'].groupArray">
+              <mat-expansion-panel *ngFor="let city of contestObject['City Contests']?.groupArray">
                 <mat-expansion-panel-header>
                   <mat-panel-title>
                     {{city.municipality}}
                   </mat-panel-title>
                 </mat-expansion-panel-header>
                 <ng-template matExpansionPanelContent>
-                  <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+                  <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'"
                     *ngFor="let contest of city.groupArray">
                     {{contest.OfficeName}}
                   </button>
@@ -56,14 +55,14 @@
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <mat-accordion>
-              <mat-expansion-panel *ngFor="let township of contestsObj['Township Contests'].groupArray">
+              <mat-expansion-panel *ngFor="let township of contestObject['Township Contests']?.groupArray">
                 <mat-expansion-panel-header>
                   <mat-panel-title>
                     {{township.municipality}}
                   </mat-panel-title>
                 </mat-expansion-panel-header>
                 <ng-template matExpansionPanelContent>
-                  <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+                  <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'"
                     *ngFor="let contest of township.groupArray">
                     {{contest.OfficeName}}
                   </button>
@@ -85,8 +84,8 @@
                   </mat-panel-title>
                 </mat-expansion-panel-header>
                 <ng-template matExpansionPanelContent>
-                  <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-                    *ngFor="let contest of contestsObj['County Contests'][county.CountyID].groupArray">
+                  <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'"
+                    *ngFor="let contest of contestObject['County Contests'][county.CountyID]?.groupArray">
                     {{contest.OfficeName}}
                   </button>
                 </ng-template>
@@ -99,9 +98,10 @@
   </mat-card>
 </div>
 
-<div *ngIf="!(displaySettings | async)" class="grid-container" [ngClass]="{'slideshow': autoscroll}" #contestContainer>
+<div class="grid-container results" [ngClass]="{'slideshow': (slideshow | async), 'hidden': (displaySettings | async)}"
+  #contestContainer>
   <ng-container *ngFor="let contest of contests | async">
-    <mat-card *ngIf="!contest.hidden">
+    <mat-card>
       <mat-card-header>
         <mat-card-title>{{contest.OfficeName}}</mat-card-title>
         <mat-card-subtitle class="clickable" (click)="precinctPercentage = !precinctPercentage">{{ precinctPercentage ?

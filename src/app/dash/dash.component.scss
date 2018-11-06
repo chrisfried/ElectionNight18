@@ -91,3 +91,17 @@ button {
   text-transform: capitalize;
   margin: 0 0.5em 0.5em 0;
 }
+
+.settings {
+  display: none;
+
+  &.visible {
+    display: block;
+  }
+}
+
+.results {
+  &.hidden {
+    display: none;
+  }
+}

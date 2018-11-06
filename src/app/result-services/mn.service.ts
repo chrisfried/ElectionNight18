@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { of, forkJoin, interval, BehaviorSubject, merge } from 'rxjs';
+import {
+  of,
+  forkJoin,
+  interval,
+  BehaviorSubject,
+  merge,
+  combineLatest
+} from 'rxjs';
 import { map, switchMap, catchError, take } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
@@ -7,6 +14,22 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root'
 })
 export class MnService {
+  storedVisible = localStorage.getItem('mnen-visible');
+  firstLoad = this.storedVisible ? false : true;
+  visible = this.storedVisible ? JSON.parse(this.storedVisible) : {};
+  visibleBS = new BehaviorSubject(this.visible);
+  saveVisible = this.visibleBS.subscribe(res =>
+    localStorage.setItem('mnen-visible', JSON.stringify(res))
+  );
+
+  storedSlideshow = localStorage.getItem('azen-slideshow');
+  slideshowBS = new BehaviorSubject(
+    this.storedSlideshow ? JSON.parse(this.storedSlideshow) : false
+  );
+  saveSlideshow = this.slideshowBS.subscribe(res =>
+    localStorage.setItem('azen-slideshow', JSON.stringify(res))
+  );
+
   displaySettings: BehaviorSubject<boolean> = new BehaviorSubject(false);
   scrollInterval = interval(20000);
 
@@ -100,7 +123,8 @@ export class MnService {
       return of([]);
     })
   );
-  results = merge(this.checkHttp, this.checkInterval).pipe(
+
+  unfilteredResults = merge(this.checkHttp, this.checkInterval).pipe(
     map(resultsArray => {
       resultsArray.forEach(res => {
         const resArray = res.split('\n');
@@ -150,7 +174,6 @@ export class MnService {
           const uid = CountyID + OfficeID + District;
 
           let list;
-          let hidden = true;
 
           if (CountyID) {
             if (!this.contests['County Contests'][CountyID]) {
@@ -164,26 +187,38 @@ export class MnService {
 
             if (OfficeName.includes('U.S. Senator')) {
               listName = 'Statewide Contests';
-              hidden = false;
+              if (this.firstLoad) {
+                this.visible[uid] = true;
+              }
             } else if (OfficeName.includes('U.S. Representative')) {
               listName = 'U.S. Representatives';
-              hidden = false;
+              if (this.firstLoad) {
+                this.visible[uid] = true;
+              }
             } else if (OfficeName.includes('State Senator')) {
               listName = 'State Senators';
             } else if (OfficeName.includes('State Representative')) {
               listName = 'State Representatives';
             } else if (OfficeName.includes('Governor & Lt Governor')) {
               listName = 'Statewide Contests';
-              hidden = false;
+              if (this.firstLoad) {
+                this.visible[uid] = true;
+              }
             } else if (OfficeName.includes('Secretary of State')) {
               listName = 'Statewide Contests';
-              hidden = false;
+              if (this.firstLoad) {
+                this.visible[uid] = true;
+              }
             } else if (OfficeName.includes('State Auditor')) {
               listName = 'Statewide Contests';
-              hidden = false;
+              if (this.firstLoad) {
+                this.visible[uid] = true;
+              }
             } else if (OfficeName.includes('Attorney General')) {
               listName = 'Statewide Contests';
-              hidden = false;
+              if (this.firstLoad) {
+                this.visible[uid] = true;
+              }
             } else if (OfficeName.includes('School Board Member')) {
               listName = 'School Boards';
             } else if (OfficeName.includes('SCHOOL DISTRICT QUESTION')) {
@@ -239,6 +274,7 @@ export class MnService {
 
           if (!list[uid]) {
             list[uid] = {
+              uid,
               State,
               CountyID,
               PrecinctName,
@@ -248,7 +284,6 @@ export class MnService {
               NumberOfPrecinctsReporting,
               TotalNumberOfPrecinctsVotingForTheOffice,
               TotalNumberOfVotesForOfficeInArea,
-              hidden,
               Choices: {},
               ChoicesArray: []
             };
@@ -283,7 +318,39 @@ export class MnService {
         });
       });
 
+      if (this.firstLoad) {
+        this.visibleBS.next(this.visible);
+        this.firstLoad = false;
+      }
+
       return [...this.contestsArray];
+    })
+  );
+
+  setHidden = combineLatest(this.unfilteredResults, this.visibleBS).pipe(
+    map(([contestArray, visible]) => {
+      contestArray.forEach(contest => {
+        if (visible[contest.uid]) {
+          contest.hidden = false;
+        } else {
+          contest.hidden = true;
+        }
+      });
+      return contestArray;
+    })
+  );
+
+  resultsObj = this.setHidden.pipe(map(res => this.contests));
+
+  results = this.setHidden.pipe(
+    map(contestArray => {
+      const filteredArray = [];
+      contestArray.forEach(contest => {
+        if (!contest.hidden) {
+          filteredArray.push(contest);
+        }
+      });
+      return filteredArray;
     })
   );
 
@@ -295,5 +362,16 @@ export class MnService {
       .subscribe(displaySettings =>
         this.displaySettings.next(!displaySettings)
       );
+  }
+
+  toggleSlideshow() {
+    this.slideshowBS.pipe(take(1)).subscribe(res => {
+      this.slideshowBS.next(!res);
+    });
+  }
+
+  toggleContest(contest) {
+    this.visible[contest.uid] = !this.visible[contest.uid];
+    this.visibleBS.next(this.visible);
   }
 }
