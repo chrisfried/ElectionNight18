@@ -11,7 +11,13 @@ export class MnService {
   scrollInterval = interval(20000);
 
   contests = {
-    'County Contests': {}
+    'County Contests': {},
+    'City Contests': {
+      groupArray: []
+    },
+    'Township Contests': {
+      groupArray: []
+    }
   };
   contestGroups = [];
   contestsArray = [];
@@ -61,10 +67,10 @@ export class MnService {
     44, // District Court
     // 10, // County Races
     88, // County Races and Questions
-    14, // Municipal Questions
-    // 1, // Municipal and Hospital District and Questions
+    // 14, // Municipal Questions
+    1, // Municipal and Hospital District and Questions
     // 9, // Municipal, Hospital, School District by Precinct
-    90, // Hospital District
+    // 90, // Hospital District
     57, // School Board
     17 // School Referendum and Bond Questions
     // 7, // School Board and Questions
@@ -178,16 +184,10 @@ export class MnService {
             } else if (OfficeName.includes('Attorney General')) {
               listName = 'Statewide Contests';
               hidden = false;
-            } else if (OfficeName.includes('CITY QUESTION')) {
-              listName = 'City Questions';
-            } else if (OfficeName.includes('TOWNSHIP QUESTION')) {
-              listName = 'Township Questions';
             } else if (OfficeName.includes('School Board Member')) {
               listName = 'School Boards';
             } else if (OfficeName.includes('SCHOOL DISTRICT QUESTION')) {
               listName = 'School District Questions';
-            } else if (OfficeName.includes('Hospital District')) {
-              listName = 'Hospital Districts';
             } else if (OfficeName.includes('Supreme Court')) {
               listName = 'Supreme Court';
             } else if (OfficeName.includes('Court of Appeals')) {
@@ -205,6 +205,36 @@ export class MnService {
               this.contestGroups.push(listName);
             }
             list = this.contests[listName];
+          }
+
+          if (list === this.contests['Other']) {
+            const match = /\((?!Elect)(.*?)\)/g.exec(OfficeName);
+            if (match) {
+              const municipality = match[1];
+              if (municipality.includes('Township')) {
+                if (!this.contests['Township Contests'][municipality]) {
+                  this.contests['Township Contests'][municipality] = {
+                    municipality,
+                    groupArray: []
+                  };
+                  this.contests['Township Contests'].groupArray.push(
+                    this.contests['Township Contests'][municipality]
+                  );
+                }
+                list = this.contests['Township Contests'][municipality];
+              } else {
+                if (!this.contests['City Contests'][municipality]) {
+                  this.contests['City Contests'][municipality] = {
+                    municipality,
+                    groupArray: []
+                  };
+                  this.contests['City Contests'].groupArray.push(
+                    this.contests['City Contests'][municipality]
+                  );
+                }
+                list = this.contests['City Contests'][municipality];
+              }
+            }
           }
 
           if (!list[uid]) {
