@@ -5,7 +5,7 @@
       <mat-card-subtitle>Scrolls horizontally to next "slide" every 20 seconds</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <button mat-flat-button [color]="autoscroll ? 'primary' : ''" (click)="autoscroll = !autoscroll">Slideshow</button>
+      <button mat-flat-button [color]="(slideshow | async) ? 'primary' : ''" (click)="toggleSlideshow()">Slideshow</button>
     </mat-card-content>
   </mat-card>
   <mat-card>
@@ -13,28 +13,32 @@
       <mat-card-title>Contests</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            State Contests
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-          *ngFor="let contest of fullStateList | async">
-          {{contest.ContestName}}
-        </button>
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            County Contests
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-          *ngFor="let contest of fullCountyList | async">
-          {{contest.ContestName}}
-        </button>
-      </mat-expansion-panel>
+      <mat-accordion>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              State Contests
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'" *ngFor="let contest of fullStateList | async">
+              {{contest.ContestName}}
+            </button>
+          </ng-template>
+        </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              County Contests
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'" *ngFor="let contest of fullCountyList | async">
+              {{contest.ContestName}}
+            </button>
+          </ng-template>
+        </mat-expansion-panel>
+      </mat-accordion>
     </mat-card-content>
   </mat-card>
   <mat-card>
@@ -42,7 +46,7 @@
       <mat-card-title>County Overlay</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <button mat-flat-button [color]="countyOverlay === county.CountyId ? 'primary' : ''" (click)="countyOverlay === county.CountyId ? countyOverlay = 0 : countyOverlay = county.CountyId"
+      <button mat-flat-button [color]="(countyOverlay | async) === county.CountyId ? 'primary' : ''" (click)="setOverlay(county.CountyId)"
         *ngFor="let county of counties">{{
         county.CountyName }}</button>
     </mat-card-content>
@@ -70,7 +74,8 @@
   </mat-card>
 </div>
 
-<div *ngIf="!(displaySettings | async)" class="grid-container" [ngClass]="{'slideshow': autoscroll}" #contestContainer>
+<div *ngIf="!(displaySettings | async)" class="grid-container" [ngClass]="{'slideshow': (slideshow | async)}"
+  #contestContainer>
   <ng-container *ngFor="let contest of contests | async">
     <mat-card *ngIf="!contest.hidden">
       <mat-card-header>

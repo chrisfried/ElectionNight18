@@ -14,6 +14,37 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root'
 })
 export class AzService {
+  storedHidden = localStorage.getItem('azen-hidden');
+  hidden = this.storedHidden ? JSON.parse(this.storedHidden) : {};
+  hiddenBS = new BehaviorSubject(this.hidden);
+  saveHidden = this.hiddenBS.subscribe(res =>
+    localStorage.setItem('azen-hidden', JSON.stringify(res))
+  );
+
+  storedSlideshow = localStorage.getItem('azen-slideshow');
+  slideshowBS = new BehaviorSubject(
+    this.storedSlideshow ? JSON.parse(this.storedSlideshow) : false
+  );
+  saveSlideshow = this.slideshowBS.subscribe(res =>
+    localStorage.setItem('azen-slideshow', JSON.stringify(res))
+  );
+
+  storedOverlay = localStorage.getItem('azen-overlay');
+  overlayBS = new BehaviorSubject(
+    this.storedOverlay ? JSON.parse(this.storedOverlay) : 0
+  );
+  saveOverlay = this.overlayBS.subscribe(res =>
+    localStorage.setItem('azen-overlay', JSON.stringify(res))
+  );
+
+  storedCounty = localStorage.getItem('azen-county');
+  activeCounty = new BehaviorSubject(
+    this.storedCounty ? JSON.parse(this.storedCounty) : 0
+  );
+  saveCounty = this.activeCounty.subscribe(res =>
+    localStorage.setItem('azen-county', JSON.stringify(res))
+  );
+
   stateUploadId = new BehaviorSubject(0);
   stateCheckHttp = this.http.get('/data/4/0/election_4_0.json');
   stateInterval = interval(10000).pipe(
@@ -62,7 +93,6 @@ export class AzService {
     })
   );
 
-  activeCounty = new BehaviorSubject(0);
   countyUploadId = new BehaviorSubject(0);
   countyCheckHttp = this.activeCounty.pipe(
     switchMap(county => {
@@ -120,30 +150,32 @@ export class AzService {
   );
 
   displaySettings: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  autoscroll = false;
 
   counties = {};
   countiesArray = [];
 
   contests = {};
 
-  scrollInterval = interval(20000).pipe(map(res => this.autoscroll));
+  scrollInterval = interval(20000);
 
-  fullStateList = this.stateCountyData.pipe(
+  preFullStateList = this.stateCountyData.pipe(
     map(data => this.choiceProcessor(data, 0)),
     tap(data => data.forEach(contest => this.contestNameFix(contest)))
   );
-  fullCountyList = this.countyCountyData.pipe(
+  preFullCountyList = this.countyCountyData.pipe(
     map(data => this.choiceProcessor(data, 11)),
     tap(data => data.forEach(contest => this.contestNameFix(contest)))
   );
 
-  unfilteredResults = combineLatest(
-    this.fullStateList,
-    this.fullCountyList
-  ).pipe(
-    map(([state, county]) => {
-      state.forEach(contest => {
+  fullStateList = combineLatest(this.preFullStateList, this.hiddenBS).pipe(
+    map(([data, hidden]) => {
+      data.forEach(contest => {
+        if (hidden[contest.ContestName]) {
+          contest.hidden = true;
+        } else {
+          contest.hidden = false;
+        }
+
         if (
           contest.ContestName.includes('State Senator') ||
           contest.ContestName.includes('State Representative')
@@ -152,17 +184,33 @@ export class AzService {
             contest.ContestName.match(/(\d)/g)[0],
             10
           );
-          contest.hidden = true;
         }
       });
-      county.forEach(contest => {
-        contest.hidden = true;
-      });
-      state.sort((a, b) => {
+      return data.sort((a, b) => {
         const aSort = a.StateSortVal ? a.StateSortVal : a.ContestId;
         const bSort = b.StateSortVal ? b.StateSortVal : b.ContestId;
         return aSort - bSort;
       });
+    })
+  );
+  fullCountyList = combineLatest(this.preFullCountyList, this.hiddenBS).pipe(
+    map(([data, hidden]) => {
+      data.forEach(contest => {
+        if (hidden[contest.ContestName]) {
+          contest.hidden = true;
+        } else {
+          contest.hidden = false;
+        }
+      });
+      return data;
+    })
+  );
+
+  unfilteredResults = combineLatest(
+    this.fullStateList,
+    this.fullCountyList
+  ).pipe(
+    map(([state, county]) => {
       county.sort((a, b) => a.ContestId - b.ContestId);
       const contestArray = [...state, ...county];
       contestArray.forEach(contest => {
@@ -184,9 +232,18 @@ export class AzService {
     })
   );
 
-  results = combineLatest(this.unfilteredResults, this.earlyBallots).pipe(
-    map(([contestArray, earlyBallots]) => {
+  results = combineLatest(
+    this.unfilteredResults,
+    this.earlyBallots,
+    this.hiddenBS
+  ).pipe(
+    map(([contestArray, earlyBallots, hidden]) => {
+      const filteredArray = [];
+
       contestArray.forEach(contest => {
+        if (contest.hidden === true) {
+          return;
+        }
         const earlyContest = earlyBallots.find(
           item => item.ContestId === contest.ContestId
         );
@@ -200,9 +257,10 @@ export class AzService {
             choice.PhotoFile = earlyChoice.PhotoFile;
           }
         });
+        filteredArray.push(contest);
       });
 
-      return contestArray;
+      return filteredArray;
     })
   );
 
@@ -379,21 +437,21 @@ export class AzService {
       );
   }
 
+  toggleContest(contest) {
+    this.hidden[contest.ContestName] = !this.hidden[contest.ContestName];
+    this.hiddenBS.next(this.hidden);
+  }
+
   showAll() {
-    this.results.pipe(take(1)).subscribe(res => {
-      res.forEach(contest => {
-        if (contest.hidden) {
-          contest.hidden = false;
-        }
-      });
-    });
+    this.hidden = {};
+    this.hiddenBS.next(this.hidden);
   }
 
   hideAll() {
     this.results.pipe(take(1)).subscribe(res => {
       res.forEach(contest => {
-        if (!contest.hidden) {
-          contest.hidden = true;
+        if (!this.hidden[contest.ContestName]) {
+          this.toggleContest(contest);
         }
       });
     });
@@ -403,11 +461,11 @@ export class AzService {
     this.results.pipe(take(1)).subscribe(res => {
       res.forEach(contest => {
         if (
-          !contest.hidden &&
+          !this.hidden[contest.ContestName] &&
           contest.NumberToElect &&
           contest.ChoicesArray.length <= contest.NumberToElect
         ) {
-          contest.hidden = true;
+          this.toggleContest(contest);
         }
       });
     });
@@ -416,5 +474,17 @@ export class AzService {
   selectCounty(county) {
     this.countyUploadId.next(0);
     this.activeCounty.next(county);
+  }
+
+  toggleSlideshow() {
+    this.slideshowBS.pipe(take(1)).subscribe(res => {
+      this.slideshowBS.next(!res);
+    });
+  }
+
+  setOverlay(CountyId) {
+    this.overlayBS.pipe(take(1)).subscribe(res => {
+      res === CountyId ? this.overlayBS.next(0) : this.overlayBS.next(CountyId);
+    });
   }
 }
