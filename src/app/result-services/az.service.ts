@@ -247,16 +247,18 @@ export class AzService {
         const earlyContest = earlyBallots.find(
           item => item.ContestId === contest.ContestId
         );
-        contest.ChoicesArray.forEach(choice => {
-          const earlyChoice = earlyContest.Choices.find(
-            item2 => item2.ChoiceName === choice.OriginalChoiceName
-          );
-          if (earlyChoice) {
-            choice.EarlyVotes = earlyChoice.EarlyVotes;
-            choice.ProvisionalVotes = earlyChoice.ProvisionalVotes;
-            choice.PhotoFile = earlyChoice.PhotoFile;
-          }
-        });
+        if (earlyContest) {
+          contest.ChoicesArray.forEach(choice => {
+            const earlyChoice = earlyContest.Choices.find(
+              item2 => item2.ChoiceName === choice.OriginalChoiceName
+            );
+            if (earlyChoice) {
+              choice.EarlyVotes = earlyChoice.EarlyVotes;
+              choice.ProvisionalVotes = earlyChoice.ProvisionalVotes;
+              choice.PhotoFile = earlyChoice.PhotoFile;
+            }
+          });
+        }
         filteredArray.push(contest);
       });
 
