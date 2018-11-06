@@ -293,7 +293,7 @@ export class MnService {
             list[uid].NumberOfPrecinctsReporting = NumberOfPrecinctsReporting;
             list[
               uid
-            ].NumberOfPrecinctsReporting = TotalNumberOfVotesForOfficeInArea;
+            ].TotalNumberOfVotesForOfficeInArea = TotalNumberOfVotesForOfficeInArea;
           }
           if (!list[uid].Choices[CandidateName]) {
             list[uid].Choices[CandidateName] = {
