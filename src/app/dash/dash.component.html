@@ -14,72 +14,87 @@
       <mat-card-subtitle>Choose which contests to display</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <mat-expansion-panel *ngFor="let groupName of contestGroups">
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            {{ groupName }}
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-          *ngFor="let contest of contestsObj[groupName].groupArray">
-          {{contest.OfficeName}}
-        </button>
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>
-          <mat-panel-title>City Contests</mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <mat-expansion-panel *ngFor="let city of contestsObj['City Contests'].groupArray">
+      <mat-accordion>
+        <mat-expansion-panel *ngFor="let groupName of contestGroups">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              {{city.municipality}}
+              {{ groupName }}
             </mat-panel-title>
           </mat-expansion-panel-header>
-
-          <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-            *ngFor="let contest of city.groupArray">
-            {{contest.OfficeName}}
-          </button>
+          <ng-template matExpansionPanelContent>
+            <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+              *ngFor="let contest of contestsObj[groupName].groupArray">
+              {{contest.OfficeName}}
+            </button>
+          </ng-template>
         </mat-expansion-panel>
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>
-          <mat-panel-title>Township Contests</mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <mat-expansion-panel *ngFor="let township of contestsObj['Township Contests'].groupArray">
+        <mat-expansion-panel>
           <mat-expansion-panel-header>
-            <mat-panel-title>
-              {{township.municipality}}
-            </mat-panel-title>
+            <mat-panel-title>City Contests</mat-panel-title>
           </mat-expansion-panel-header>
-
-          <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-            *ngFor="let contest of township.groupArray">
-            {{contest.OfficeName}}
-          </button>
+          <ng-template matExpansionPanelContent>
+            <mat-accordion>
+              <mat-expansion-panel *ngFor="let city of contestsObj['City Contests'].groupArray">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    {{city.municipality}}
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+                    *ngFor="let contest of city.groupArray">
+                    {{contest.OfficeName}}
+                  </button>
+                </ng-template>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </ng-template>
         </mat-expansion-panel>
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>
-          <mat-panel-title>County Contests</mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <mat-expansion-panel *ngFor="let county of counties">
+        <mat-expansion-panel>
           <mat-expansion-panel-header>
-            <mat-panel-title>
-              {{ county.CountyName }} County
-            </mat-panel-title>
+            <mat-panel-title>Township Contests</mat-panel-title>
           </mat-expansion-panel-header>
-
-          <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
-            *ngFor="let contest of contestsObj['County Contests'][county.CountyID].groupArray">
-            {{contest.OfficeName}}
-          </button>
+          <ng-template matExpansionPanelContent>
+            <mat-accordion>
+              <mat-expansion-panel *ngFor="let township of contestsObj['Township Contests'].groupArray">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    {{township.municipality}}
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+                    *ngFor="let contest of township.groupArray">
+                    {{contest.OfficeName}}
+                  </button>
+                </ng-template>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </ng-template>
         </mat-expansion-panel>
-      </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>County Contests</mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <mat-accordion>
+              <mat-expansion-panel *ngFor="let county of counties">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    {{ county.CountyName }} County
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <button mat-flat-button (click)="contest.hidden = !contest.hidden" [color]="contest.hidden ? '' : 'primary'"
+                    *ngFor="let contest of contestsObj['County Contests'][county.CountyID].groupArray">
+                    {{contest.OfficeName}}
+                  </button>
+                </ng-template>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </ng-template>
+        </mat-expansion-panel>
+      </mat-accordion>
     </mat-card-content>
   </mat-card>
 </div>
