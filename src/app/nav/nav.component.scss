@@ -15,3 +15,17 @@
   top: 0;
   z-index: 1;
 }
+
+.title {
+  flex-grow: 1;
+}
+
+.donate {
+  height: 1.25em;
+  overflow: hidden;
+  opacity: 0.25;
+
+  img {
+    height: 100%;
+  }
+}
