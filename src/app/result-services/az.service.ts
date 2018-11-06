@@ -143,6 +143,27 @@ export class AzService {
     this.fullCountyList
   ).pipe(
     map(([state, county]) => {
+      state.forEach(contest => {
+        if (
+          contest.ContestName.includes('State Senator') ||
+          contest.ContestName.includes('State Representative')
+        ) {
+          contest.StateSortVal = parseInt(
+            contest.ContestName.match(/(\d)/g)[0],
+            10
+          );
+          contest.hidden = true;
+        }
+      });
+      county.forEach(contest => {
+        contest.hidden = true;
+      });
+      state.sort((a, b) => {
+        const aSort = a.StateSortVal ? a.StateSortVal : a.ContestId;
+        const bSort = b.StateSortVal ? b.StateSortVal : b.ContestId;
+        return aSort - bSort;
+      });
+      county.sort((a, b) => a.ContestId - b.ContestId);
       const contestArray = [...state, ...county];
       contestArray.forEach(contest => {
         contest.ChoicesArray.forEach(choice => {
@@ -153,7 +174,7 @@ export class AzService {
           }
         });
       });
-      return contestArray.sort((a, b) => a.ContestId - b.ContestId);
+      return contestArray;
     })
   );
 

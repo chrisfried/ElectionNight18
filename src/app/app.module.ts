@@ -15,7 +15,8 @@ import {
   MatGridListModule,
   MatCardModule,
   MatMenuModule,
-  MatBadgeModule
+  MatBadgeModule,
+  MatExpansionModule
 } from '@angular/material';
 import { DashComponent } from './dash/dash.component';
 
@@ -37,7 +38,8 @@ import { HttpClientModule } from '@angular/common/http';
     MatCardModule,
     MatMenuModule,
     MatBadgeModule,
-    HttpClientModule
+    HttpClientModule,
+    MatExpansionModule
   ],
   providers: [AzService, BrowserStateService],
   bootstrap: [AppComponent]
