@@ -116,7 +116,7 @@ export class MnService {
       return forkJoin(requests);
     })
   );
-  checkInterval = interval(20000).pipe(
+  checkInterval = interval(30000).pipe(
     switchMap(res => this.checkHttp),
     catchError(e => {
       console.error(e);
