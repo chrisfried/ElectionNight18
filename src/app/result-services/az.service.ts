@@ -177,13 +177,11 @@ export class AzService {
         }
 
         if (
-          contest.ContestName.includes('State Senator') ||
-          contest.ContestName.includes('State Representative')
+          contest.ContestName.includes('state senator') ||
+          contest.ContestName.includes('state representative')
         ) {
-          contest.StateSortVal = parseInt(
-            contest.ContestName.match(/(\d)/g)[0],
-            10
-          );
+          contest.StateSortVal =
+            parseInt(contest.ContestName.match(/([\d])+/g)[0], 10) + 235;
         }
       });
       return data.sort((a, b) => {
