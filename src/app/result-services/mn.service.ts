@@ -116,15 +116,16 @@ export class MnService {
       return forkJoin(requests);
     })
   );
-  checkInterval = interval(30000).pipe(
-    switchMap(res => this.checkHttp),
-    catchError(e => {
-      console.error(e);
-      return of([]);
-    })
-  );
+  // checkInterval = interval(30000).pipe(
+  //   switchMap(res => this.checkHttp),
+  //   catchError(e => {
+  //     console.error(e);
+  //     return of([]);
+  //   })
+  // );
 
-  unfilteredResults = merge(this.checkHttp, this.checkInterval).pipe(
+  // unfilteredResults = merge(this.checkHttp, this.checkInterval).pipe(
+  unfilteredResults = this.checkHttp.pipe(
     map(resultsArray => {
       resultsArray.forEach(res => {
         const resArray = res.split('\n');
