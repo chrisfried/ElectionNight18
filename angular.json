@@ -135,5 +135,8 @@
       }
     }
   },
-  "defaultProject": "ElectionNight18"
+  "defaultProject": "ElectionNight18",
+  "cli": {
+    "analytics": "1d1257cf-4aff-4f24-9b10-afbdee84e08b"
+  }
 }
