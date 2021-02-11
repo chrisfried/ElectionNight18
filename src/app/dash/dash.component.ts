@@ -4,16 +4,40 @@ import { map, withLatestFrom } from 'rxjs/operators';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
 import { MnService } from '../result-services/mn.service';
 import { BrowserStateService } from '../browser-state.service';
+import { Races } from '../types';
 
 @Component({
   selector: 'app-dash',
   templateUrl: './dash.component.html',
-  styleUrls: ['./dash.component.scss']
+  styleUrls: ['./dash.component.scss'],
 })
 export class DashComponent {
   @ViewChild('contestContainer')
   contestContainer: ElementRef;
-  contests: Observable<any>;
+  contestSets: Observable<
+    {
+      [key in Races]?: {
+        countyId: string;
+        district: string;
+        officeId: string;
+        officeName: string;
+        precinctName: string;
+        precinctsReporting: number;
+        state: string;
+        totalPrecincts: number;
+        totalVotes: number;
+        choices: {
+          [candidateOrderCode: string]: {
+            candidateName: string;
+            candidateOrderCode: string;
+            partyAbbreviation: string;
+            votes: number;
+            votesPercentage: number;
+          };
+        };
+      };
+    }
+  >;
   unfilteredContests: Observable<any>;
   fullStateList: Observable<any>;
   fullCountyList: Observable<any>;
@@ -26,21 +50,19 @@ export class DashComponent {
   activeCounty: BehaviorSubject<number>;
   contestGroups: string[];
   contestsObj: Observable<{}>;
+  hidden: { [key: string]: boolean };
+
+  isMobile: boolean;
 
   constructor(
     private mnService: MnService,
     browserStateService: BrowserStateService
   ) {
-    this.contests = mnService.results;
-    this.unfilteredContests = mnService.unfilteredResults;
-    this.contestGroups = mnService.contestGroups;
-    this.contestsObj = mnService.resultsObj;
-    this.counties = mnService.counties;
-    // this.fullStateList = mnService.fullStateList;
-    // this.fullCountyList = mnService.fullCountyList;
+    window.onresize = () => (this.isMobile = window.innerWidth < 800);
+
+    this.contestSets = mnService.results;
+    this.hidden = mnService.hidden;
     this.displaySettings = mnService.displaySettings;
-    // this.autoscroll = mnService.autoscroll;
-    // this.activeCounty = mnService.activeCounty;
     this.slideshow = mnService.slideshowBS;
 
     mnService.scrollInterval
@@ -62,6 +84,18 @@ export class DashComponent {
       });
   }
 
-  toggleContest = contest => this.mnService.toggleContest(contest);
+  toggleContest = (set: string, contest: string) =>
+    this.mnService.toggleContest(set, contest);
+  toggleSet = (set: { key: string; value: {} }, show: boolean) => {
+    for (const contestKey in set.value) {
+      if (contestKey) {
+        if (show) {
+          this.mnService.toggleContestShow(set.key, contestKey);
+        } else {
+          this.mnService.toggleContestHide(set.key, contestKey);
+        }
+      }
+    }
+  };
   toggleSlideshow = () => this.mnService.toggleSlideshow();
 }

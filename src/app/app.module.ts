@@ -21,8 +21,13 @@ import { DashComponent } from './dash/dash.component';
 import { MnService } from './result-services/mn.service';
 import { BrowserStateService } from './browser-state.service';
 import { HttpClientModule } from '@angular/common/http';
+
+import { AngularFireModule } from '@angular/fire';
+import { AngularFireDatabaseModule } from '@angular/fire/database';
+import { environment } from 'src/environments/environment';
+import { ContestSetPipe } from './contest-set.pipe';
 @NgModule({
-  declarations: [AppComponent, NavComponent, DashComponent],
+  declarations: [AppComponent, NavComponent, DashComponent, ContestSetPipe],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -37,9 +42,11 @@ import { HttpClientModule } from '@angular/common/http';
     MatMenuModule,
     MatBadgeModule,
     MatExpansionModule,
-    HttpClientModule
+    HttpClientModule,
+    AngularFireModule.initializeApp(environment.firebaseConfig),
+    AngularFireDatabaseModule,
   ],
   providers: [MnService, BrowserStateService],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
 export class AppModule {}

@@ -1,4 +1,4 @@
-.grid-container {
+::ng-deep .grid-container {
   padding: 16px;
   column-count: 1;
   scroll-behavior: smooth;
@@ -29,12 +29,12 @@
   width: calc(100% - 32px);
 }
 
-.vote-count {
+::ng-deep .vote-count {
   flex-grow: 1;
   text-align: right;
 }
 
-.mat-badge-content {
+::ng-deep .mat-badge-content {
   background: #595f72;
 
   .R & {
@@ -50,7 +50,9 @@
   }
 }
 
-.mat-badge-medium.mat-badge-overlap.mat-badge-before .mat-badge-content {
+::ng-deep
+  .mat-badge-medium.mat-badge-overlap.mat-badge-before
+  .mat-badge-content {
   top: 13px;
 }
 
@@ -78,7 +80,7 @@
   }
 }
 
-.clickable {
+::ng-deep .clickable {
   cursor: pointer;
 }
 

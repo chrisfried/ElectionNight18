@@ -1,11 +1,39 @@
-<div class="grid-container settings" [ngClass]="{'visible': (displaySettings | async)}">
+<div
+  class="grid-container settings"
+  [ngClass]="{ visible: (displaySettings | async) }"
+>
   <mat-card>
     <mat-card-header>
-      <mat-card-title>Slideshow</mat-card-title>
-      <mat-card-subtitle>Scrolls horizontally to next "slide" every 20 seconds</mat-card-subtitle>
+      <mat-card-title>About</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <button mat-flat-button [color]="(slideshow | async) ? 'primary' : ''" (click)="toggleSlideshow()">Slideshow</button>
+      <p>
+        Updating every 60 seconds with
+        <a
+          href="https://electionresults.sos.state.mn.us/Select/MediaFiles/Index?ersElectionId=136"
+          target="_blank"
+          >data</a
+        >
+        from the Minnesota Secretary of State.
+      </p>
+    </mat-card-content>
+  </mat-card>
+  <mat-card *ngIf="!isMobile">
+    <mat-card-header>
+      <mat-card-title>Slideshow</mat-card-title>
+      <mat-card-subtitle
+        >Scrolls horizontally to next "slide" every 20
+        seconds</mat-card-subtitle
+      >
+    </mat-card-header>
+    <mat-card-content>
+      <button
+        mat-flat-button
+        [color]="(slideshow | async) ? 'primary' : ''"
+        (click)="toggleSlideshow()"
+      >
+        Slideshow
+      </button>
     </mat-card-content>
   </mat-card>
   <mat-card>
@@ -14,83 +42,36 @@
       <mat-card-subtitle>Choose which contests to display</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <mat-accordion *ngIf="contestsObj | async as contestObject">
-        <mat-expansion-panel *ngFor="let groupName of contestGroups">
+      <mat-accordion>
+        <mat-expansion-panel *ngFor="let set of contestSets | async | keyvalue">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              {{ groupName }}
+              {{ set.key | contestSet }}
             </mat-panel-title>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
-            <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'" *ngFor="let contest of contestObject[groupName]?.groupArray">
-              {{contest.OfficeName}}
+            <button
+              mat-flat-button
+              (click)="toggleSet(set, true)"
+              *ngIf="set.key !== 'A' && set.key !== 'B'"
+            >
+              Show All
             </button>
-          </ng-template>
-        </mat-expansion-panel>
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>City Contests</mat-panel-title>
-          </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <mat-accordion>
-              <mat-expansion-panel *ngFor="let city of contestObject['City Contests']?.groupArray">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    {{city.municipality}}
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'"
-                    *ngFor="let contest of city.groupArray">
-                    {{contest.OfficeName}}
-                  </button>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
-          </ng-template>
-        </mat-expansion-panel>
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>Township Contests</mat-panel-title>
-          </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <mat-accordion>
-              <mat-expansion-panel *ngFor="let township of contestObject['Township Contests']?.groupArray">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    {{township.municipality}}
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'"
-                    *ngFor="let contest of township.groupArray">
-                    {{contest.OfficeName}}
-                  </button>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
-          </ng-template>
-        </mat-expansion-panel>
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>County Contests</mat-panel-title>
-          </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <mat-accordion>
-              <mat-expansion-panel *ngFor="let county of counties">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    {{ county.CountyName }} County
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <button mat-flat-button (click)="toggleContest(contest)" [color]="contest.hidden ? '' : 'primary'"
-                    *ngFor="let contest of contestObject['County Contests'][county.CountyID]?.groupArray">
-                    {{contest.OfficeName}}
-                  </button>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
+            <button
+              mat-flat-button
+              (click)="toggleSet(set, false)"
+              *ngIf="set.key !== 'A' && set.key !== 'B'"
+            >
+              Hide All
+            </button>
+            <button
+              mat-flat-button
+              (click)="toggleContest(set.key, contest.key)"
+              [color]="hidden[set.key + contest.key] ? '' : 'primary'"
+              *ngFor="let contest of set.value | keyvalue"
+            >
+              {{ contest.value.officeName }}
+            </button>
           </ng-template>
         </mat-expansion-panel>
       </mat-accordion>
@@ -98,33 +79,76 @@
   </mat-card>
 </div>
 
-<div class="grid-container results" [ngClass]="{'slideshow': (slideshow | async), 'hidden': (displaySettings | async)}"
-  #contestContainer>
-  <ng-container *ngFor="let contest of contests | async">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>{{contest.OfficeName}}</mat-card-title>
-        <mat-card-subtitle class="clickable" (click)="precinctPercentage = !precinctPercentage">{{ precinctPercentage ?
-          (contest.NumberOfPrecinctsReporting / contest.TotalNumberOfPrecinctsVotingForTheOffice * 100 |
-          number:'1.0-1') + '% of'
-          : contest.NumberOfPrecinctsReporting + ' of ' + contest.TotalNumberOfPrecinctsVotingForTheOffice }} Precincts
-          Reporting</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content class="dashboard-card-content">
-        <mat-list>
-          <ng-container *ngFor="let choice of contest.ChoicesArray; last as isLast">
-            <mat-list-item *ngIf="!isLast || choice.PartyAbbreviation !== 'WI'" class="clickable" (click)="votePercentage = !votePercentage"
-              [matBadge]="choice.PartyAbbreviation !== 'WI' && choice.PartyAbbreviation !== 'NP' ? choice.PartyAbbreviation[0] : ''"
-              matBadgePosition="before" [ngClass]="[choice.PartyAbbreviation[0], choice.CandidateName]">{{
-              choice.CandidateName }}<span class="vote-count">{{votePercentage &&
-                contest.TotalNumberOfVotesForOfficeInArea > 0 ?
-                (choice.VotesForCandidate /
-                contest.TotalNumberOfVotesForOfficeInArea * 100 | number:'1.1-1') + '%' : choice.VotesForCandidate}}</span>
-              <div class="fill-bar" [ngStyle]="{'width': contest.TotalNumberOfVotesForOfficeInArea ? choice.VotesForCandidate / contest.TotalNumberOfVotesForOfficeInArea * 100 + '%' : '0%'}"></div>
-            </mat-list-item>
-          </ng-container>
-        </mat-list>
-      </mat-card-content>
-    </mat-card>
+<div
+  class="grid-container results"
+  [ngClass]="{
+    slideshow: (slideshow | async),
+    hidden: (displaySettings | async)
+  }"
+  #contestContainer
+>
+  <ng-container *ngFor="let set of contestSets | async | keyvalue">
+    <ng-container *ngFor="let contest of set.value | keyvalue">
+      <mat-card
+        *ngIf="contest.value.officeName && !hidden[set.key + contest.key]"
+      >
+        <mat-card-header>
+          <mat-card-title>{{ contest.value.officeName }}</mat-card-title>
+          <mat-card-subtitle
+            class="clickable"
+            (click)="precinctPercentage = !precinctPercentage"
+            >{{
+              precinctPercentage
+                ? ((contest.value.precinctsReporting /
+                    contest.value.totalPrecincts) *
+                    100 | number: '1.0-1') + '% of'
+                : contest.value.precinctsReporting +
+                  ' of ' +
+                  contest.value.totalPrecincts
+            }}
+            Precincts Reporting</mat-card-subtitle
+          >
+        </mat-card-header>
+        <mat-card-content class="dashboard-card-content">
+          <mat-list>
+            <ng-container
+              *ngFor="let choice of contest.value.choicesSorted; last as isLast"
+            >
+              <mat-list-item
+                *ngIf="!isLast || choice.partyAbbreviation !== 'WI'"
+                class="clickable"
+                (click)="votePercentage = !votePercentage"
+                [matBadge]="
+                  choice.partyAbbreviation &&
+                  choice.partyAbbreviation !== 'WI' &&
+                  choice.partyAbbreviation !== 'NP'
+                    ? choice.partyAbbreviation[0]
+                    : ''
+                "
+                matBadgePosition="before"
+                [ngClass]="
+                  choice.partyAbbreviation ? choice.partyAbbreviation[0] : ''
+                "
+                >{{ choice.candidateName
+                }}<span class="vote-count">{{
+                  votePercentage && contest.value.totalVotes > 0
+                    ? ((choice.votes / contest.value.totalVotes) * 100
+                        | number: '1.1-1') + '%'
+                    : choice.votes
+                }}</span>
+                <div
+                  class="fill-bar"
+                  [ngStyle]="{
+                    width: contest.value.totalVotes
+                      ? (choice.votes / contest.value.totalVotes) * 100 + '%'
+                      : '0%'
+                  }"
+                ></div>
+              </mat-list-item>
+            </ng-container>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+    </ng-container>
   </ng-container>
 </div>

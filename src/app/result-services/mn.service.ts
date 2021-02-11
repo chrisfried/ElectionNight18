@@ -5,374 +5,160 @@ import {
   interval,
   BehaviorSubject,
   merge,
-  combineLatest
+  combineLatest,
+  Observable,
 } from 'rxjs';
 import { map, switchMap, catchError, take } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
+import { AngularFirestore } from '@angular/fire/firestore';
+import { Races, Result, ResultsResponse } from '../types';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MnService {
-  storedVisible = localStorage.getItem('mnen-visible');
-  firstLoad = this.storedVisible ? false : true;
-  visible = this.storedVisible ? JSON.parse(this.storedVisible) : {};
-  visibleBS = new BehaviorSubject(this.visible);
-  saveVisible = this.visibleBS.subscribe(res =>
-    localStorage.setItem('mnen-visible', JSON.stringify(res))
+  storedHidden = localStorage.getItem('mnen-hidden');
+  hidden = this.storedHidden ? JSON.parse(this.storedHidden) : {};
+  hiddenBS = new BehaviorSubject(this.hidden);
+  saveHidden = this.hiddenBS.subscribe((res) =>
+    localStorage.setItem('mnen-hidden', JSON.stringify(res))
   );
 
-  storedSlideshow = localStorage.getItem('azen-slideshow');
+  storedSlideshow = localStorage.getItem('mnen-slideshow');
   slideshowBS = new BehaviorSubject(
     this.storedSlideshow ? JSON.parse(this.storedSlideshow) : false
   );
-  saveSlideshow = this.slideshowBS.subscribe(res =>
-    localStorage.setItem('azen-slideshow', JSON.stringify(res))
+  saveSlideshow = this.slideshowBS.subscribe((res) =>
+    localStorage.setItem('mnen-slideshow', JSON.stringify(res))
   );
 
   displaySettings: BehaviorSubject<boolean> = new BehaviorSubject(false);
   scrollInterval = interval(20000);
 
-  contests = {
-    'County Contests': {},
-    'City Contests': {
-      groupArray: []
-    },
-    'Township Contests': {
-      groupArray: []
+  results: BehaviorSubject<
+    {
+      [key in Races]?: {
+        countyId: string;
+        district: string;
+        officeId: string;
+        officeName: string;
+        precinctName: string;
+        precinctsReporting: number;
+        state: string;
+        totalPrecincts: number;
+        totalVotes: number;
+        choices: {
+          [candidateOrderCode: string]: {
+            candidateName: string;
+            candidateOrderCode: string;
+            partyAbbreviation: string;
+            votes: number;
+            votesPercentage: number;
+          };
+        };
+      };
     }
-  };
-  contestGroups = [];
-  contestsArray = [];
-  counties = [];
+  > = new BehaviorSubject({});
 
-  race = 115;
-  getCounties = this.http
-    .get(`/Results/MediaSupportResult/${this.race}?mediafileid=6`, {
-      responseType: 'text'
-    })
-    .pipe(
-      map(countiesRaw => {
-        const countiesArray = countiesRaw.split('\n');
-        countiesArray.forEach(countyRaw => {
-          const countyArray = countyRaw.split(';');
-          if (countyArray.length < 3) {
-            return;
-          }
-          const county = {
-            CountyID: countyArray[0],
-            CountyName: countyArray[1],
-            NumberOfPrecincts: countyArray[2]
-          };
-          this.counties.push(county);
-        });
-      })
-    )
-    .subscribe();
-  lists = [
-    23, // US Senate Statewide
-    // 41, // US Senate by Congressional District
-    // 27, // US Senate by County
-    // 28, // US Senate by Precinct
-    24, // US House by District
-    // 60, // US House by County
-    // 29, // US House by Precinct
-    56, // Governor Statewide
-    // 39, // Governor by Precinct
-    34, // Secretary of State
-    35, // AG
-    36, // State Auditor
-    30, // State Senate by District
-    // 16, // State Senate by Precinct
-    20, // State House by District
-    // 21, // State House by Precinct
-    37, // Supreme Court
-    44, // District Court
-    // 10, // County Races
-    88, // County Races and Questions
-    // 14, // Municipal Questions
-    1, // Municipal and Hospital District and Questions
-    // 9, // Municipal, Hospital, School District by Precinct
-    // 90, // Hospital District
-    57, // School Board
-    17 // School Referendum and Bond Questions
-    // 7, // School Board and Questions
-    // 93, // Precinct Reporting Stats
-    // 38, // All Federal, State, and County Races by County
-    // 13, // All Federal, State, and County Races by Precinct
-  ];
-  checkHttp = of(this.lists).pipe(
-    switchMap(lists => {
-      const requests = [];
-      lists.forEach(list => {
-        requests.push(
-          this.http.get(
-            `/Results/MediaSupportResult/${this.race}?mediafileid=${list}`,
-            { responseType: 'text' }
-          )
-        );
-      });
-
-      return forkJoin(requests);
-    })
-  );
-  // checkInterval = interval(30000).pipe(
-  //   switchMap(res => this.checkHttp),
-  //   catchError(e => {
-  //     console.error(e);
-  //     return of([]);
-  //   })
-  // );
-
-  // unfilteredResults = merge(this.checkHttp, this.checkInterval).pipe(
-  unfilteredResults = this.checkHttp.pipe(
-    map(resultsArray => {
-      resultsArray.forEach(res => {
-        const resArray = res.split('\n');
-        resArray.forEach(contestRaw => {
-          const contestArray = contestRaw.split(';');
-          if (contestArray.length < 16) {
-            return;
-          }
-          const contest = {
-            State: contestArray[0],
-            CountyID: contestArray[1],
-            PrecinctName: contestArray[2],
-            OfficeID: contestArray[3],
-            OfficeName: contestArray[4],
-            District: contestArray[5],
-            CandidateOrderCode: contestArray[6],
-            CandidateName: contestArray[7],
-            Suffix: contestArray[8],
-            IncumbentCode: contestArray[9],
-            PartyAbbreviation: contestArray[10],
-            NumberOfPrecinctsReporting: parseInt(contestArray[11], 10),
-            TotalNumberOfPrecinctsVotingForTheOffice: parseInt(
-              contestArray[12],
-              10
-            ),
-            VotesForCandidate: parseInt(contestArray[13], 10),
-            PercentageOfVotesForCandidateOutOfTotalVotesForOffice:
-              contestArray[14],
-            TotalNumberOfVotesForOfficeInArea: parseInt(contestArray[15], 10)
-          };
-          const {
-            State,
-            CountyID,
-            PrecinctName,
-            OfficeID,
-            OfficeName,
-            District,
-            CandidateOrderCode,
-            CandidateName,
-            PartyAbbreviation,
-            NumberOfPrecinctsReporting,
-            TotalNumberOfPrecinctsVotingForTheOffice,
-            VotesForCandidate,
-            PercentageOfVotesForCandidateOutOfTotalVotesForOffice,
-            TotalNumberOfVotesForOfficeInArea
-          } = contest;
-          const uid = CountyID + OfficeID + District;
-
-          let list;
-
-          if (CountyID) {
-            if (!this.contests['County Contests'][CountyID]) {
-              this.contests['County Contests'][CountyID] = {
-                groupArray: []
-              };
+  constructor(private http: HttpClient, private firestore: AngularFirestore) {
+    const resultsSnapshot = this.firestore
+      .collection('results')
+      .snapshotChanges();
+    resultsSnapshot
+      .pipe(
+        map((data) => {
+          const results = {};
+          data.forEach((e) => {
+            const race = e.payload.doc.id as Races;
+            let raceId: 'A' | 'B' | 'C' | 'D' | 'E';
+            switch (race) {
+              case 'USPres':
+                raceId = 'A';
+                break;
+              case 'ussenate':
+                raceId = 'B';
+                break;
+              case 'ushouse':
+                raceId = 'C';
+                break;
+              case 'stsenate':
+                raceId = 'D';
+                break;
+              case 'LegislativeByDistrict':
+                raceId = 'E';
+                break;
             }
-            list = this.contests['County Contests'][CountyID];
-          } else {
-            let listName = 'Other';
-
-            if (OfficeName.includes('U.S. Senator')) {
-              listName = 'Statewide Contests';
-              if (this.firstLoad) {
-                this.visible[uid] = true;
+            const list = (results[raceId] = {});
+            const response = e.payload.doc.data() as ResultsResponse;
+            response.data.forEach((result) => {
+              if (!list[result.officeId]) {
+                list[result.officeId] = {
+                  countyId: result.countyId,
+                  district: result.district,
+                  officeId: result.officeId,
+                  officeName: result.officeName,
+                  precinctName: result.precinctName,
+                  precinctsReporting: parseInt(result.precinctsReporting),
+                  state: result.state,
+                  totalPrecincts: parseInt(result.totalPrecincts),
+                  totalVotes: parseInt(result.totalVotes),
+                  choices: {},
+                  choicesSorted: [],
+                };
               }
-            } else if (OfficeName.includes('U.S. Representative')) {
-              listName = 'U.S. Representatives';
-              if (this.firstLoad) {
-                this.visible[uid] = true;
+              if (!list[result.officeId].choices[result.candidateOrderCode]) {
+                list[result.officeId].choices[result.candidateOrderCode] = {
+                  candidateName: result.candidateName,
+                  candidateOrderCode: result.candidateOrderCode,
+                  partyAbbreviation: result.partyAbbreviation,
+                  votes: parseInt(result.votes),
+                  votesPercentage: parseFloat(result.votesPercentage),
+                };
+                list[result.officeId].choicesSorted.push(
+                  list[result.officeId].choices[result.candidateOrderCode]
+                );
+                list[result.officeId].choicesSorted.sort(
+                  (a: any, b: any) => b.votes - a.votes
+                );
               }
-            } else if (OfficeName.includes('State Senator')) {
-              listName = 'State Senators';
-            } else if (OfficeName.includes('State Representative')) {
-              listName = 'State Representatives';
-            } else if (OfficeName.includes('Governor & Lt Governor')) {
-              listName = 'Statewide Contests';
-              if (this.firstLoad) {
-                this.visible[uid] = true;
-              }
-            } else if (OfficeName.includes('Secretary of State')) {
-              listName = 'Statewide Contests';
-              if (this.firstLoad) {
-                this.visible[uid] = true;
-              }
-            } else if (OfficeName.includes('State Auditor')) {
-              listName = 'Statewide Contests';
-              if (this.firstLoad) {
-                this.visible[uid] = true;
-              }
-            } else if (OfficeName.includes('Attorney General')) {
-              listName = 'Statewide Contests';
-              if (this.firstLoad) {
-                this.visible[uid] = true;
-              }
-            } else if (OfficeName.includes('School Board Member')) {
-              listName = 'School Boards';
-            } else if (OfficeName.includes('SCHOOL DISTRICT QUESTION')) {
-              listName = 'School District Questions';
-            } else if (OfficeName.includes('Supreme Court')) {
-              listName = 'Supreme Court';
-            } else if (OfficeName.includes('Court of Appeals')) {
-              listName = 'Court of Appeals';
-            } else if (OfficeName.includes('District Court')) {
-              listName = 'District Courts';
-            } else if (OfficeName.includes('Court of Appeals')) {
-              listName = 'Court of Appeals';
-            }
-
-            if (!this.contests[listName]) {
-              this.contests[listName] = {
-                groupArray: []
-              };
-              this.contestGroups.push(listName);
-            }
-            list = this.contests[listName];
-          }
-
-          if (list === this.contests['Other']) {
-            const match = /\((?!Elect)(.*?)\)/g.exec(OfficeName);
-            if (match) {
-              const municipality = match[1];
-              if (municipality.includes('Township')) {
-                if (!this.contests['Township Contests'][municipality]) {
-                  this.contests['Township Contests'][municipality] = {
-                    municipality,
-                    groupArray: []
-                  };
-                  this.contests['Township Contests'].groupArray.push(
-                    this.contests['Township Contests'][municipality]
-                  );
-                }
-                list = this.contests['Township Contests'][municipality];
-              } else {
-                if (!this.contests['City Contests'][municipality]) {
-                  this.contests['City Contests'][municipality] = {
-                    municipality,
-                    groupArray: []
-                  };
-                  this.contests['City Contests'].groupArray.push(
-                    this.contests['City Contests'][municipality]
-                  );
-                }
-                list = this.contests['City Contests'][municipality];
-              }
-            }
-          }
-
-          if (!list[uid]) {
-            list[uid] = {
-              uid,
-              State,
-              CountyID,
-              PrecinctName,
-              OfficeID,
-              OfficeName,
-              District,
-              NumberOfPrecinctsReporting,
-              TotalNumberOfPrecinctsVotingForTheOffice,
-              TotalNumberOfVotesForOfficeInArea,
-              Choices: {},
-              ChoicesArray: []
-            };
-            this.contestsArray.push(list[uid]);
-            list.groupArray.push(list[uid]);
-          } else {
-            list[uid].NumberOfPrecinctsReporting = NumberOfPrecinctsReporting;
-            list[
-              uid
-            ].TotalNumberOfVotesForOfficeInArea = TotalNumberOfVotesForOfficeInArea;
-          }
-          if (!list[uid].Choices[CandidateName]) {
-            list[uid].Choices[CandidateName] = {
-              CandidateOrderCode,
-              CandidateName,
-              PartyAbbreviation,
-              VotesForCandidate,
-              PercentageOfVotesForCandidateOutOfTotalVotesForOffice
-            };
-            list[uid].ChoicesArray.push(list[uid].Choices[CandidateName]);
-          } else {
-            list[uid].Choices[
-              CandidateName
-            ].VotesForCandidate = VotesForCandidate;
-            list[uid].Choices[
-              CandidateName
-            ].PercentageOfVotesForCandidateOutOfTotalVotesForOffice = PercentageOfVotesForCandidateOutOfTotalVotesForOffice;
-          }
-          list[uid].ChoicesArray.sort(
-            (a, b) => b.VotesForCandidate - a.VotesForCandidate
-          );
-        });
-      });
-
-      if (this.firstLoad) {
-        this.visibleBS.next(this.visible);
-        this.firstLoad = false;
-      }
-
-      return [...this.contestsArray];
-    })
-  );
-
-  setHidden = combineLatest(this.unfilteredResults, this.visibleBS).pipe(
-    map(([contestArray, visible]) => {
-      contestArray.forEach(contest => {
-        if (visible[contest.uid]) {
-          contest.hidden = false;
-        } else {
-          contest.hidden = true;
-        }
-      });
-      return contestArray;
-    })
-  );
-
-  resultsObj = this.setHidden.pipe(map(res => this.contests));
-
-  results = this.setHidden.pipe(
-    map(contestArray => {
-      const filteredArray = [];
-      contestArray.forEach(contest => {
-        if (!contest.hidden) {
-          filteredArray.push(contest);
-        }
-      });
-      return filteredArray;
-    })
-  );
-
-  constructor(private http: HttpClient) {}
+            });
+          });
+          console.log(results);
+          this.results.next(results);
+        })
+      )
+      .subscribe();
+  }
 
   toggleSettings() {
     this.displaySettings
       .pipe(take(1))
-      .subscribe(displaySettings =>
+      .subscribe((displaySettings) =>
         this.displaySettings.next(!displaySettings)
       );
   }
 
   toggleSlideshow() {
-    this.slideshowBS.pipe(take(1)).subscribe(res => {
+    this.slideshowBS.pipe(take(1)).subscribe((res) => {
       this.slideshowBS.next(!res);
     });
   }
 
-  toggleContest(contest) {
-    this.visible[contest.uid] = !this.visible[contest.uid];
-    this.visibleBS.next(this.visible);
+  toggleContest(set: string, contest: string) {
+    const uid = `${set}${contest}`;
+    this.hidden[uid] = !this.hidden[uid];
+    this.hiddenBS.next(this.hidden);
+  }
+
+  toggleContestHide(set: string, contest: string) {
+    const uid = `${set}${contest}`;
+    this.hidden[uid] = true;
+    this.hiddenBS.next(this.hidden);
+  }
+
+  toggleContestShow(set: string, contest: string) {
+    const uid = `${set}${contest}`;
+    this.hidden[uid] = false;
+    this.hiddenBS.next(this.hidden);
   }
 }
