@@ -18,11 +18,15 @@ export class Result {
 }
 
 export type Races =
-  | 'LegislativeByDistrict'
   | 'USPres'
-  | 'stsenate'
+  | 'Governor'
+  | 'secofstate'
+  | 'attorneygen'
+  | 'auditor'
   | 'ushouse'
-  | 'ussenate';
+  | 'ussenate'
+  | 'stsenate'
+  | 'LegislativeByDistrict';
 
 export class ResultsResponse {
   data: Result[];

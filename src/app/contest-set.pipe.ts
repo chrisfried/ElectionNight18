@@ -9,12 +9,20 @@ export class ContestSetPipe implements PipeTransform {
       case 'A':
         return 'U.S. President';
       case 'B':
-        return 'U.S. Senate';
+        return 'Governor';
       case 'C':
-        return 'U.S. House';
+        return 'Secretary of State';
       case 'D':
-        return 'M.N. Senate';
+        return 'Attorney General';
       case 'E':
+        return 'State Auditor';
+      case 'F':
+        return 'U.S. Senate';
+      case 'G':
+        return 'U.S. House';
+      case 'H':
+        return 'M.N. Senate';
+      case 'I':
         return 'M.N. House';
     }
     return null;

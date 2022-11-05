@@ -35,30 +35,28 @@ export class MnService {
   displaySettings: BehaviorSubject<boolean> = new BehaviorSubject(false);
   scrollInterval = interval(20000);
 
-  results: BehaviorSubject<
-    {
-      [key in Races]?: {
-        countyId: string;
-        district: string;
-        officeId: string;
-        officeName: string;
-        precinctName: string;
-        precinctsReporting: number;
-        state: string;
-        totalPrecincts: number;
-        totalVotes: number;
-        choices: {
-          [candidateOrderCode: string]: {
-            candidateName: string;
-            candidateOrderCode: string;
-            partyAbbreviation: string;
-            votes: number;
-            votesPercentage: number;
-          };
+  results: BehaviorSubject<{
+    [key in Races]?: {
+      countyId: string;
+      district: string;
+      officeId: string;
+      officeName: string;
+      precinctName: string;
+      precinctsReporting: number;
+      state: string;
+      totalPrecincts: number;
+      totalVotes: number;
+      choices: {
+        [candidateOrderCode: string]: {
+          candidateName: string;
+          candidateOrderCode: string;
+          partyAbbreviation: string;
+          votes: number;
+          votesPercentage: number;
         };
       };
-    }
-  > = new BehaviorSubject({});
+    };
+  }> = new BehaviorSubject({});
 
   constructor(private http: HttpClient, private firestore: AngularFirestore) {
     const resultsSnapshot = this.firestore
@@ -70,22 +68,34 @@ export class MnService {
           const results = {};
           data.forEach((e) => {
             const race = e.payload.doc.id as Races;
-            let raceId: 'A' | 'B' | 'C' | 'D' | 'E';
+            let raceId: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
             switch (race) {
               case 'USPres':
                 raceId = 'A';
                 break;
-              case 'ussenate':
+              case 'Governor':
                 raceId = 'B';
                 break;
-              case 'ushouse':
+              case 'secofstate':
                 raceId = 'C';
                 break;
-              case 'stsenate':
+              case 'attorneygen':
                 raceId = 'D';
                 break;
-              case 'LegislativeByDistrict':
+              case 'auditor':
                 raceId = 'E';
+                break;
+              case 'ussenate':
+                raceId = 'F';
+                break;
+              case 'ushouse':
+                raceId = 'G';
+                break;
+              case 'stsenate':
+                raceId = 'H';
+                break;
+              case 'LegislativeByDistrict':
+                raceId = 'I';
                 break;
             }
             const list = (results[raceId] = {});

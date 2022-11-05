@@ -53,14 +53,14 @@
             <button
               mat-flat-button
               (click)="toggleSet(set, true)"
-              *ngIf="set.key !== 'A' && set.key !== 'B'"
+              *ngIf="set.key !== 'A' && set.key !== 'B' && set.key !== 'C' && set.key !== 'D' && set.key !== 'E' && set.key !== 'F'"
             >
               Show All
             </button>
             <button
               mat-flat-button
               (click)="toggleSet(set, false)"
-              *ngIf="set.key !== 'A' && set.key !== 'B'"
+              *ngIf="set.key !== 'A' && set.key !== 'B' && set.key !== 'C' && set.key !== 'D' && set.key !== 'E' && set.key !== 'F'"
             >
               Hide All
             </button>
@@ -88,6 +88,7 @@
   #contestContainer
 >
   <ng-container *ngFor="let set of contestSets | async | keyvalue">
+
     <ng-container *ngFor="let contest of set.value | keyvalue">
       <mat-card
         *ngIf="contest.value.officeName && !hidden[set.key + contest.key]"
